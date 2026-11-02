@@ -13,6 +13,12 @@ from sklearn.metrics import (
     confusion_matrix
 )
 
+# Optional suggestions: if suggester.py is missing or broken, the rest still works.
+try:
+    from suggester import show_suggestions
+except Exception:
+    show_suggestions = None
+
 DATASET_PATH = "mood_dataset.xlsx"
 MODEL_PATH = "mood_model.pkl"
 
@@ -195,7 +201,7 @@ def main():
         model = train_model()
 
         print("\n--- Mood Detection Demo ---")
-        print("Type a message or 'q' to quit.")
+        print("Type a message, 'suggest' for example sentences, or 'q' to quit.")
 
         while True:
             text = input("\nYou: ")
@@ -203,6 +209,15 @@ def main():
             if text.strip().lower() == "q":
                 print("Goodbye!")
                 break
+
+            # "suggest" or "suggest sad" -> show example sentences to type
+            command = text.strip().lower()
+            if command == "suggest" or command.startswith("suggest "):
+                if show_suggestions is None:
+                    print("Suggestions are not available (suggester.py missing).")
+                else:
+                    show_suggestions(model, command[len("suggest"):].strip() or None)
+                continue
 
             try:
                 result = predict_mood(model, text)
