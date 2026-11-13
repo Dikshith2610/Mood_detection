@@ -1,0 +1,73 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+
+def main():
+    # 1. Load dataset
+    # Make sure mood_dataset.csv is in the same folder as this .py file
+    df = pd.read_csv("mood_dataset.csv")   # columns: text, label
+
+    print("Dataset shape:", df.shape)
+    print("\nSample data:")
+    print(df.head())
+
+    # 2. Separate features and labels
+    X = df["text"]      # input sentences
+    y = df["label"]     # moods
+
+    # 3. Train-test split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,       # 20% for testing
+        random_state=42,
+        stratify=y           # keep class balance
+    )
+
+    # 4. Build pipeline: TF-IDF + Logistic Regression
+    model = Pipeline([
+        ("tfidf", TfidfVectorizer(
+            lowercase=True,
+            stop_words="english"   # remove common words (the, is, and...)
+        )),
+        ("clf", LogisticRegression(max_iter=1000))
+    ])
+
+    # 5. Train the model
+    print("\nTraining model...")
+    model.fit(X_train, y_train)
+
+    # 6. Evaluate on test set
+    y_pred = model.predict(X_test)
+
+    acc = accuracy_score(y_test, y_pred)
+    print("\nModel accuracy: {:.2f}%".format(acc * 100))
+
+    print("\nClassification report:")
+    print(classification_report(y_test, y_pred))
+
+    print("Confusion matrix:")
+    print(confusion_matrix(y_test, y_pred))
+
+    # 7. Interactive prediction loop
+    print("\n--- Mood Detection Demo ---")
+    print("Type a sentence and I will predict the mood.")
+    print("Type 'q' to quit.\n")
+
+    while True:
+        user_input = input("You: ")
+        if user_input.strip().lower() == "q":
+            print("Exiting. Bye!")
+            break
+
+        prediction = model.predict([user_input])[0]
+        print("Predicted mood:", prediction)
+        print()
+
+
+if __name__ == "__main__":
+    main()
